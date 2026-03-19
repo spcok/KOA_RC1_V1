@@ -1,3 +1,12 @@
+export interface HusbandryLog {
+  id: string;
+  animal_id: string;
+  date: string;
+  type: 'FEED' | 'WEIGHT' | 'FLIGHT' | 'TRAINING' | 'TEMPERATURE';
+  value: string;
+  author: string;
+}
+
 export enum ShiftType {
   FULL_DAY = 'Full Day',
   MORNING = 'Morning',

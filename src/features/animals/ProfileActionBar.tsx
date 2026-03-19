@@ -2,6 +2,8 @@ import React from 'react';
 import { Archive, Edit2, FileText } from 'lucide-react';
 import { usePermissions } from '@/src/hooks/usePermissions';
 
+import { UserRole } from '@/src/types';
+
 interface Props {
   onEdit: () => void;
   onSign: () => void;
@@ -9,10 +11,10 @@ interface Props {
 }
 
 export const ProfileActionBar: React.FC<Props> = ({ onEdit, onSign, onArchive }) => {
-  const { permissions, role } = usePermissions();
+  const permissions = usePermissions();
   
   // RBAC: Archive permission check
-  const canArchive = permissions.includes('Archive_Animal') || role === 'Admin' || role === 'Manager';
+  const canArchive = permissions.archive_animals || permissions.role === UserRole.ADMIN || permissions.role === UserRole.OWNER;
 
   return (
     <div className="flex gap-2 mt-4">

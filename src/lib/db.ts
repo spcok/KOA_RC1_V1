@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Animal, LogEntry, Task, ClinicalNote, MARChart, QuarantineRecord, InternalMovement, ExternalTransfer, Timesheet, Holiday, User, OrgProfileSettings, Contact, ZLADocument, SafetyDrill, MaintenanceLog, FirstAidLog, Incident, DailyRound, RolePermissionConfig, SyncQueueItem, OperationalList, Shift } from '../types';
+import { Animal, LogEntry, Task, ClinicalNote, MARChart, QuarantineRecord, InternalMovement, ExternalTransfer, Timesheet, Holiday, User, OrgProfileSettings, Contact, ZLADocument, SafetyDrill, MaintenanceLog, FirstAidLog, Incident, DailyRound, RolePermissionConfig, SyncQueueItem, OperationalList, Shift, HusbandryLog } from '../types';
 
 export interface UploadQueueItem {
   id?: number;
@@ -49,6 +49,7 @@ export class AppDatabase extends Dexie {
   daily_rounds!: Table<DailyRound, string>;
   operational_lists!: Table<OperationalList, string>;
   shifts!: Table<Shift, string>;
+  husbandry_logs!: Table<HusbandryLog, string>;
   sync_queue!: Table<SyncQueueItem, number>;
   upload_queue!: Table<UploadQueueItem, number>;
   media_upload_queue!: Table<MediaUploadQueueItem, number>;

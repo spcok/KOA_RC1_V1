@@ -168,7 +168,7 @@ export default function AnimalProfile({ animalId, onBack }: Props) {
       <div className="bg-white rounded-2xl shadow-sm p-6 min-h-[400px]">
         {activeTab === 'profile' && <div className="text-slate-600">Profile details for {animal.name}</div>}
         {activeTab === 'medical' && <MedicalRecords animalId={animal.id} />}
-        {activeTab === 'husbandry' && <HusbandryLogs />}
+        {activeTab === 'husbandry' && <HusbandryLogs animalId={effectiveId} />}
         {activeTab === 'notes' && <div className="text-slate-600">Clinical notes...</div>}
         {activeTab === 'logs' && <div className="text-slate-600">Daily logs...</div>}
       </div>
