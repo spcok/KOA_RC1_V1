@@ -107,6 +107,11 @@ const AnimalFormModal: React.FC<AnimalFormModalProps> = ({ isOpen, onClose, init
       critical_husbandry_notes: sanitizedData.critical_husbandry_notes
         ? sanitizedData.critical_husbandry_notes.split('\n').map(n => n.trim()).filter(n => n.length > 0)
         : [],
+      target_day_temp_c: sanitizedData.target_day_temp_c,
+      target_night_temp_c: sanitizedData.target_night_temp_c,
+      target_humidity_min_percent: sanitizedData.target_humidity_min_percent,
+      target_humidity_max_percent: sanitizedData.target_humidity_max_percent,
+      misting_frequency: sanitizedData.misting_frequency,
       flying_weight_g: flightGrams > 0 ? flightGrams : null,
       winter_weight_g: winterGrams > 0 ? winterGrams : null,
       weight_unit: weightUnit === 'lb' ? 'lbs_oz' : weightUnit

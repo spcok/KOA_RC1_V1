@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Edit2, FileText, Archive, Stethoscope, ClipboardList, BookOpen, Clock, ArrowLeft } from 'lucide-react';
+import { FileText, Stethoscope, ClipboardList, BookOpen, Clock, ArrowLeft } from 'lucide-react';
 import { useAnimalProfileData } from './useAnimalProfileData';
 import { IUCNBadge } from './IUCNBadge';
 import AnimalFormModal from './AnimalFormModal';
 import SignGenerator from './SignGenerator';
 import MedicalRecords from '../medical/MedicalRecords';
+import { ProfileActionBar } from './ProfileActionBar';
+import { HusbandryLogs } from '../husbandry/HusbandryLogs';
 
 export interface Props {
   animalId?: string;
@@ -19,6 +21,7 @@ export default function AnimalProfile({ animalId, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<'profile' | 'medical' | 'husbandry' | 'notes' | 'logs'>('profile');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSignGeneratorOpen, setIsSignGeneratorOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
   if (isLoading) return <div className="p-8 text-center">Loading...</div>;
   if (!animal) return <div className="p-8 text-center">Animal not found.</div>;
@@ -101,26 +104,11 @@ export default function AnimalProfile({ animalId, onBack }: Props) {
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4">
-            <button 
-              onClick={() => setIsEditModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition"
-            >
-              <Edit2 size={16} /> Edit
-            </button>
-            <button 
-              onClick={() => setIsSignGeneratorOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 text-sm rounded-lg hover:bg-slate-200 transition"
-            >
-              <FileText size={16} /> Sign Generator
-            </button>
-            <button 
-              onClick={() => archiveAnimal('Archived by user', 'Disposition')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-lg hover:bg-red-100 transition"
-            >
-              <Archive size={16} /> Archive
-            </button>
-          </div>
+          <ProfileActionBar
+            onEdit={() => setIsEditModalOpen(true)}
+            onSign={() => setIsSignGeneratorOpen(true)}
+            onArchive={() => setIsArchiveOpen(true)}
+          />
         </div>
       </div>
 
@@ -140,6 +128,20 @@ export default function AnimalProfile({ animalId, onBack }: Props) {
           orgProfile={orgProfile}
           onClose={() => setIsSignGeneratorOpen(false)}
         />
+      )}
+      
+      {/* Archive Dialog (Placeholder for now) */}
+      {isArchiveOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg">
+            <h2 className="text-lg font-bold">Archive Animal</h2>
+            <p>Are you sure you want to archive {animal.name}?</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setIsArchiveOpen(false)} className="px-4 py-2 bg-slate-200 rounded">Cancel</button>
+              <button onClick={() => { archiveAnimal('Archived by user', 'Disposition'); setIsArchiveOpen(false); }} className="px-4 py-2 bg-red-600 text-white rounded">Archive</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Tabs */}
@@ -166,7 +168,7 @@ export default function AnimalProfile({ animalId, onBack }: Props) {
       <div className="bg-white rounded-2xl shadow-sm p-6 min-h-[400px]">
         {activeTab === 'profile' && <div className="text-slate-600">Profile details for {animal.name}</div>}
         {activeTab === 'medical' && <MedicalRecords animalId={animal.id} />}
-        {activeTab === 'husbandry' && <div className="text-slate-600">Husbandry tasks...</div>}
+        {activeTab === 'husbandry' && <HusbandryLogs />}
         {activeTab === 'notes' && <div className="text-slate-600">Clinical notes...</div>}
         {activeTab === 'logs' && <div className="text-slate-600">Daily logs...</div>}
       </div>
