@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuthStore } from '../../store/authStore';
 import { v4 as uuidv4 } from 'uuid';
 import { X, Save, Loader2, Plus, Trash2 } from 'lucide-react';
 import { Animal, LogType, LogEntry, AnimalCategory } from '../../types';
@@ -30,6 +31,7 @@ const AddEntryModal: React.FC<AddEntryModalProps> = ({
   allAnimals,
   defaultTemperature
 }) => {
+  const { currentUser } = useAuthStore();
   const { foodTypes, feedMethods, eventTypes } = useOperationalLists(animal.category);
   const [logType, setLogType] = useState<LogType>(initialType);
   const [date, setDate] = useState(initialDate);
@@ -107,7 +109,7 @@ const AddEntryModal: React.FC<AddEntryModalProps> = ({
   const [healthRecordType, setHealthRecordType] = useState(existingLog?.health_record_type || '');
   const [litterSize, setLitterSize] = useState<number | ''>('');
   const [litterHealth, setLitterHealth] = useState<string>('Healthy');
-  const [userInitials, setUserInitials] = useState('');
+  const [userInitials, setUserInitials] = useState(currentUser?.initials || '');
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
 
   const handleFetchWeatherInsideModal = async () => {
@@ -179,6 +181,11 @@ const AddEntryModal: React.FC<AddEntryModalProps> = ({
 
     if (logType === LogType.EVENT && !value) {
       setError('Event Type is required.');
+      return;
+    }
+
+    if ([LogType.MISTING, LogType.WATER, LogType.GENERAL, LogType.FLIGHT, LogType.TRAINING].includes(logType) && !value.trim()) {
+      setError(`${logType} detail is required.`);
       return;
     }
 

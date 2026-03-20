@@ -21,8 +21,10 @@ interface DailyLogRecord {
   author?: string;
   completed_by?: string;
   user_initials?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
+
+const validHusbandryTypes = ['FEED', 'WEIGHT', 'FLIGHT', 'TRAINING', 'TEMPERATURE'];
 
 export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
   const [logs, setLogs] = useState<DailyLogRecord[]>([]);
@@ -31,7 +33,6 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
   const [filter, setFilter] = useState('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
-  const validHusbandryTypes = ['FEED', 'WEIGHT', 'FLIGHT', 'TRAINING', 'TEMPERATURE'];
   const filters = ['ALL', ...validHusbandryTypes];
 
   const fetchLogs = async () => {
@@ -78,7 +79,7 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
 
   useEffect(() => {
     fetchLogs();
-  }, [animalId]);
+  }, [fetchLogs]);
 
   const filteredLogs = useMemo(() => {
     if (filter === 'ALL') return logs;
