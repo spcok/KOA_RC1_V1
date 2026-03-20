@@ -56,8 +56,8 @@ export class AppDatabase extends Dexie {
 
   constructor() {
     super('KentOwlAcademyDB');
-    // BUMPED TO VERSION 32 FOR COMPOUND INDEXING
-    this.version(32).stores({
+    // BUMPED TO VERSION 33 FOR HUSBANDRY LOGS
+    this.version(33).stores({
       animals: 'id, name, species, category, location',
       archived_animals: 'id, name, species, category, location',
       daily_logs: 'id, animal_id, log_type, log_date, created_at',
@@ -81,6 +81,7 @@ export class AppDatabase extends Dexie {
       daily_rounds: 'id, date, shift, status, completed_by, completed_at, updated_at',
       operational_lists: 'id, type, category, value',
       shifts: 'id, user_id, user_name, date, user_role, assigned_area, pattern_id, notes',
+      husbandry_logs: 'id, animal_id, date, type', // <-- ADDED THIS LINE
       // FLASH UPGRADE: Added [table_name+record_id] compound index
       sync_queue: '++id, [table_name+record_id], table_name, record_id, operation, status, priority, retry_count',
       upload_queue: '++id, status, created_at',

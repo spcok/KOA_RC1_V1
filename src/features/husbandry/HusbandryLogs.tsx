@@ -31,13 +31,24 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
       } catch (err) {
         console.error('Supabase fetch failed, falling back to cache:', err);
         setIsOffline(true);
-        // Offline Failover: Retrieve from local cache (Dexie/IndexedDB)
-        const cachedLogs = await db.husbandry_logs
-          .where('animal_id')
-          .equals(animalId)
-          .reverse()
-          .sortBy('date');
-        setLogs(cachedLogs || []);
+        
+        // Safety Check: Only query local DB if the table has been defined in db.ts
+        try {
+          if (db?.husbandry_logs) {
+            const cachedLogs = await db.husbandry_logs
+              .where('animal_id')
+              .equals(animalId)
+              .reverse()
+              .sortBy('date');
+            setLogs(cachedLogs || []);
+          } else {
+            console.warn("Offline failover skipped: 'husbandry_logs' table not defined in local DB.");
+            setLogs([]);
+          }
+        } catch (cacheErr) {
+          console.error('Failed to read from local cache:', cacheErr);
+          setLogs([]);
+        }
       } finally {
         setLoading(false);
       }
