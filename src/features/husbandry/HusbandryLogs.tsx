@@ -2,68 +2,92 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, AlertTriangle, Loader2 } from 'lucide-react';
 import { supabase } from '@/src/lib/supabase';
 import { db } from '@/src/lib/db';
-import { HusbandryLog } from '@/src/types';
+import AddEntryModal from './AddEntryModal';
 
 interface Props {
   animalId: string;
 }
 
+// Strict typing to prevent Vite/oxc from tripping over loose generics
+interface DailyLogRecord {
+  id?: string;
+  animal_id?: string;
+  log_type: string;
+  log_date?: string;
+  created_at?: string;
+  value?: string;
+  details?: string;
+  notes?: string;
+  author?: string;
+  completed_by?: string;
+  user_initials?: string;
+  [key: string]: any;
+}
+
 export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
-  const [logs, setLogs] = useState<HusbandryLog[]>([]);
+  const [logs, setLogs] = useState<DailyLogRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [filter, setFilter] = useState('ALL');
-  const filters = ['ALL', 'FEED', 'WEIGHT', 'FLIGHT', 'TRAINING', 'TEMPERATURE'];
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  const validHusbandryTypes = ['FEED', 'WEIGHT', 'FLIGHT', 'TRAINING', 'TEMPERATURE'];
+  const filters = ['ALL', ...validHusbandryTypes];
 
-  useEffect(() => {
-    const fetchLogs = async () => {
-      setLoading(true);
-      setIsOffline(false);
+  const fetchLogs = async () => {
+    setLoading(true);
+    setIsOffline(false);
+    try {
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('animal_id', animalId)
+        .in('log_type', validHusbandryTypes)
+        .order('log_date', { ascending: false });
+
+      if (error) throw error;
+      setLogs(data || []);
+    } catch (err) {
+      console.error('Supabase fetch failed, falling back to cache:', err);
+      setIsOffline(true);
+      
       try {
-        const { data, error } = await supabase
-          .from('husbandry_logs')
-          .select('*')
-          .eq('animal_id', animalId)
-          .order('date', { ascending: false });
-
-        if (error) throw error;
-        setLogs(data || []);
-      } catch (err) {
-        console.error('Supabase fetch failed, falling back to cache:', err);
-        setIsOffline(true);
-        
-        // Safety Check: Only query local DB if the table has been defined in db.ts
-        try {
-          if (db?.husbandry_logs) {
-            const cachedLogs = await db.husbandry_logs
-              .where('animal_id')
-              .equals(animalId)
-              .reverse()
-              .sortBy('date');
-            setLogs(cachedLogs || []);
-          } else {
-            console.warn("Offline failover skipped: 'husbandry_logs' table not defined in local DB.");
-            setLogs([]);
-          }
-        } catch (cacheErr) {
-          console.error('Failed to read from local cache:', cacheErr);
+        if (db?.daily_logs) {
+          const cachedLogs = await db.daily_logs
+            .where('animal_id')
+            .equals(animalId)
+            .reverse()
+            .sortBy('log_date');
+            
+          const husbandryCached = cachedLogs.filter(log => 
+            validHusbandryTypes.includes(log.log_type.toUpperCase())
+          );
+          setLogs(husbandryCached || []);
+        } else {
+          console.warn("Offline failover skipped: 'daily_logs' table not found.");
           setLogs([]);
         }
-      } finally {
-        setLoading(false);
+      } catch (cacheErr) {
+        console.error('Failed to read from local cache:', cacheErr);
+        setLogs([]);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchLogs();
   }, [animalId]);
 
   const filteredLogs = useMemo(() => {
     if (filter === 'ALL') return logs;
-    return logs.filter(log => log.type === filter);
+    return logs.filter(log => log.log_type?.toUpperCase() === filter);
   }, [logs, filter]);
 
   const getTypeColor = (type: string) => {
-    switch (type) {
+    const safeType = type?.toUpperCase();
+    switch (safeType) {
       case 'FEED': return 'bg-emerald-100 text-emerald-800';
       case 'WEIGHT': return 'bg-blue-100 text-blue-800';
       case 'FLIGHT': return 'bg-purple-100 text-purple-800';
@@ -74,8 +98,7 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Offline Failover & Legal Compliance Banner */}
+    <div className="space-y-4 relative">
       {isOffline && (
         <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex items-center gap-2 text-xs text-amber-800">
           <AlertTriangle size={16} />
@@ -95,7 +118,10 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
         ))}
       </div>
 
-      <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition">
+      <button 
+        onClick={() => setIsAddModalOpen(true)}
+        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition"
+      >
         <Plus size={16} /> + ADD HUSBANDRY LOG
       </button>
 
@@ -106,7 +132,7 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
               <th className="px-4 py-3 font-bold text-slate-500">DATE</th>
               <th className="px-4 py-3 font-bold text-slate-500">TYPE</th>
               <th className="px-4 py-3 font-bold text-slate-500">VALUE</th>
-              <th className="px-4 py-3 font-bold text-slate-500">AUTH & ACTIONS</th>
+              <th className="px-4 py-3 font-bold text-slate-500 uppercase">INITIALS</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -119,24 +145,42 @@ export const HusbandryLogs: React.FC<Props> = ({ animalId }) => {
             ) : filteredLogs.length > 0 ? (
               filteredLogs.map(log => (
                 <tr key={log.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-slate-700">{new Date(log.date).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {new Date(log.log_date || log.created_at || Date.now()).toLocaleDateString()}
+                  </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getTypeColor(log.type)}`}>
-                      {log.type}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getTypeColor(log.log_type)}`}>
+                      {log.log_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-bold text-slate-900">{log.value}</td>
-                  <td className="px-4 py-3 text-slate-500 text-xs">{log.author}</td>
+                  <td className="px-4 py-3 font-bold text-slate-900">
+                    {log.value || log.details || log.notes || '—'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 font-bold uppercase text-xs">
+                    {log.user_initials || '—'}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No logs found.</td>
+                <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No husbandry logs found.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {isAddModalOpen && (
+        <AddEntryModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          animalId={animalId}
+          onSuccess={() => {
+            setIsAddModalOpen(false);
+            fetchLogs();
+          }}
+        />
+      )}
     </div>
   );
 };
